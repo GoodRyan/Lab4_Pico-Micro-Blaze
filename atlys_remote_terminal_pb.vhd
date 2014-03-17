@@ -121,6 +121,10 @@ signal    kcpsm6_reset : std_logic;
 signal       cpu_reset : std_logic;
 signal             rdl : std_logic;
 
+signal		 data_route : std_logic_vector(7 downto 0);
+signal		 read_data_present : std_logic;
+signal		 write_data_present : std_logic;
+
 begin
 
 clk_to_baud_init: clk_to_baud
@@ -155,24 +159,24 @@ processor: kcpsm6
 rx: uart_rx6 
   port map (            serial_in => serial_in,
                      en_16_x_baud => baud_16x_en_sig,
-                         data_out => kcpsm6_in_port,
-                      buffer_read => read_strobe,
-              buffer_data_present => open,
+                         data_out => data_route,
+                      buffer_read => read_data_present,
+              buffer_data_present => write_data_present,
                  buffer_half_full => open,
                       buffer_full => open,
-                     buffer_reset => k_write_strobe,              
+                     buffer_reset => '0',              
                               clk => clk
 );
 
   tx: uart_tx6 
-  port map (              data_in => kcpsm6_out_port,
+  port map (              data_in => data_route,
                      en_16_x_baud => baud_16x_en_sig,
                        serial_out => serial_out,
-                     buffer_write => write_strobe,
-              buffer_data_present => open,
+                     buffer_write => write_data_present,
+              buffer_data_present => read_data_present,
                  buffer_half_full => open,
                       buffer_full => open,
-                     buffer_reset => k_write_strobe,              
+                     buffer_reset => '0',              
                               clk => clk
 );
 
