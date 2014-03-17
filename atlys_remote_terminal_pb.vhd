@@ -103,8 +103,8 @@ end component;
 signal         address : std_logic_vector(11 downto 0);
 signal     instruction : std_logic_vector(17 downto 0);
 signal     bram_enable : std_logic;
-signal         in_port : std_logic_vector(7 downto 0);
-signal        out_port : std_logic_vector(7 downto 0);
+signal   kcpsm6_in_port : std_logic_vector(7 downto 0);
+signal  kcpsm6_out_port : std_logic_vector(7 downto 0);
 signal         port_id : std_logic_vector(7 downto 0);
 signal    write_strobe : std_logic;
 signal  k_write_strobe : std_logic;
@@ -121,23 +121,6 @@ signal    kcpsm6_reset : std_logic;
 signal       cpu_reset : std_logic;
 signal             rdl : std_logic;
 
--- Signals used to connect UART_TX6
---
-signal      uart_tx_data_in : std_logic_vector(7 downto 0);
-signal     write_to_uart_tx : std_logic;
-signal uart_tx_data_present : std_logic;
-signal    uart_tx_half_full : std_logic;
-signal         uart_tx_full : std_logic;
-signal         uart_tx_reset : std_logic;
-
--- Signals used to connect UART_RX6
-signal     uart_rx_data_out : std_logic_vector(7 downto 0);
-signal    read_from_uart_rx : std_logic;
-signal uart_rx_data_present : std_logic;
-signal    uart_rx_half_full : std_logic;
-signal         uart_rx_full : std_logic;
-signal        uart_rx_reset : std_logic;
-
 begin
 
 clk_to_baud_init: clk_to_baud
@@ -148,7 +131,7 @@ clk_to_baud_init: clk_to_baud
 	);
 
 --LED output
-LED <= out_port;
+LED <= kcpsm6_out_port;
 
 processor: kcpsm6
     generic map (                 hwbuild => X"00", 
@@ -160,9 +143,9 @@ processor: kcpsm6
                    port_id => port_id,
               write_strobe => write_strobe,
             k_write_strobe => k_write_strobe,
-                  out_port => out_port,
+                  out_port => kcpsm6_out_port,
                read_strobe => read_strobe,
-                   in_port => in_port,
+                   in_port => kcpsm6_in_port,
                  interrupt => interrupt,
              interrupt_ack => interrupt_ack,
                      sleep => kcpsm6_sleep,
@@ -172,25 +155,26 @@ processor: kcpsm6
 rx: uart_rx6 
   port map (            serial_in => serial_in,
                      en_16_x_baud => baud_16x_en_sig,
-                         data_out => uart_rx_data_out,
-                      buffer_read => read_from_uart_rx,
-              buffer_data_present => uart_rx_data_present,
-                 buffer_half_full => uart_rx_half_full,
-                      buffer_full => uart_rx_full,
-                     buffer_reset => uart_rx_reset,              
+                         data_out => kcpsm6_in_port,
+                      buffer_read => read_strobe,
+              buffer_data_present => open,
+                 buffer_half_full => open,
+                      buffer_full => open,
+                     buffer_reset => k_write_strobe,              
                               clk => clk
 );
 
   tx: uart_tx6 
-  port map (              data_in => uart_tx_data_in,
+  port map (              data_in => kcpsm6_out_port,
                      en_16_x_baud => baud_16x_en_sig,
                        serial_out => serial_out,
-                     buffer_write => write_to_uart_tx,
-              buffer_data_present => uart_tx_data_present,
-                 buffer_half_full => uart_tx_half_full,
-                      buffer_full => uart_tx_full,
-                     buffer_reset => uart_tx_reset,              
-                              clk => clk);
+                     buffer_write => write_strobe,
+              buffer_data_present => open,
+                 buffer_half_full => open,
+                      buffer_full => open,
+                     buffer_reset => k_write_strobe,              
+                              clk => clk
+);
 
 	
 
