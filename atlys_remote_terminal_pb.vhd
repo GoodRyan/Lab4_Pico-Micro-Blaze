@@ -42,103 +42,103 @@ end atlys_remote_terminal_pb;
 
 architecture remote_arch of atlys_remote_terminal_pb is
 
-signal baud_16x_en_sig		: std_logic;
+	signal baud_16x_en_sig		: std_logic;
 
-component clk_to_baud
-	port (
-		clk         : in std_logic;  -- 100 MHz
-      reset       : in std_logic;
-      baud_16x_en : out std_logic -- 16*9.6 kHz (use a counter)
-	);
-end component;
+	component clk_to_baud
+		port (
+			clk         : in std_logic;  -- 100 MHz
+			reset       : in std_logic;
+			baud_16x_en : out std_logic -- 16*9.6 kHz (use a counter)
+		);
+	end component;
 
-component uart_rx6
-	port(
-		serial_in : in std_logic;
-      en_16_x_baud : in std_logic;
-      data_out : out std_logic_vector(7 downto 0);
-      buffer_read : in std_logic;
-      buffer_data_present : out std_logic;
-      buffer_half_full : out std_logic;
-      buffer_full : out std_logic;
-      buffer_reset : in std_logic;
-      clk : in std_logic
-	);
-end component;
+	component uart_rx6
+		port(
+			serial_in : in std_logic;
+			en_16_x_baud : in std_logic;
+			data_out : out std_logic_vector(7 downto 0);
+			buffer_read : in std_logic;
+			buffer_data_present : out std_logic;
+			buffer_half_full : out std_logic;
+			buffer_full : out std_logic;
+			buffer_reset : in std_logic;
+			clk : in std_logic
+		);
+	end component;
 
-component uart_tx6
-	port(
-		data_in : in std_logic_vector(7 downto 0);
-      en_16_x_baud : in std_logic;
-      serial_out : out std_logic;
-      buffer_write : in std_logic;
-      buffer_data_present : out std_logic;
-      buffer_half_full : out std_logic;
-      buffer_full : out std_logic;
-      buffer_reset : in std_logic;
-      clk : in std_logic
-	);
-end component;
+	component uart_tx6
+		port(
+			data_in : in std_logic_vector(7 downto 0);
+			en_16_x_baud : in std_logic;
+			serial_out : out std_logic;
+			buffer_write : in std_logic;
+			buffer_data_present : out std_logic;
+			buffer_half_full : out std_logic;
+			buffer_full : out std_logic;
+			buffer_reset : in std_logic;
+			clk : in std_logic
+		);
+	end component;
 
-component kcpsm6 
-    generic(                 hwbuild : std_logic_vector(7 downto 0) := X"00";
-                    interrupt_vector : std_logic_vector(11 downto 0) := X"3FF";
-             scratch_pad_memory_size : integer := 64);
-    port (                   address : out std_logic_vector(11 downto 0);
-                         instruction : in std_logic_vector(17 downto 0);
-                         bram_enable : out std_logic;
-                             in_port : in std_logic_vector(7 downto 0);
-                            out_port : out std_logic_vector(7 downto 0);
-                             port_id : out std_logic_vector(7 downto 0);
-                        write_strobe : out std_logic;
-                      k_write_strobe : out std_logic;
-                         read_strobe : out std_logic;
-                           interrupt : in std_logic;
-                       interrupt_ack : out std_logic;
-                               sleep : in std_logic;
-                               reset : in std_logic;
-                                 clk : in std_logic);
-end component;
+	component kcpsm6 
+		 generic(                 hwbuild : std_logic_vector(7 downto 0) := X"00";
+							  interrupt_vector : std_logic_vector(11 downto 0) := X"3FF";
+					 scratch_pad_memory_size : integer := 64);
+		 port (                   address : out std_logic_vector(11 downto 0);
+									 instruction : in std_logic_vector(17 downto 0);
+									 bram_enable : out std_logic;
+										  in_port : in std_logic_vector(7 downto 0);
+										 out_port : out std_logic_vector(7 downto 0);
+										  port_id : out std_logic_vector(7 downto 0);
+									write_strobe : out std_logic;
+								 k_write_strobe : out std_logic;
+									 read_strobe : out std_logic;
+										interrupt : in std_logic;
+								  interrupt_ack : out std_logic;
+											 sleep : in std_logic;
+											 reset : in std_logic;
+												clk : in std_logic);
+	end component;
 
-component terrible                           
-    generic(             C_FAMILY : string := "S6"; 
-                C_RAM_SIZE_KWORDS : integer := 1;
-             C_JTAG_LOADER_ENABLE : integer := 0);
-    Port (      address : in std_logic_vector(11 downto 0);
-            instruction : out std_logic_vector(17 downto 0);
-                 enable : in std_logic;
-                    rdl : out std_logic;                    
-                    clk : in std_logic);
-  end component;
+	component terrible                           
+		 generic(             C_FAMILY : string := "S6"; 
+						 C_RAM_SIZE_KWORDS : integer := 1;
+					 C_JTAG_LOADER_ENABLE : integer := 0);
+		 Port (      address : in std_logic_vector(11 downto 0);
+					instruction : out std_logic_vector(17 downto 0);
+						  enable : in std_logic;
+							  rdl : out std_logic;                    
+							  clk : in std_logic);
+	end component;
 
-signal         address : std_logic_vector(11 downto 0);
-signal     instruction : std_logic_vector(17 downto 0);
-signal     bram_enable : std_logic;
-signal   kcpsm6_in_port : std_logic_vector(7 downto 0);
-signal  kcpsm6_out_port : std_logic_vector(7 downto 0);
-signal         port_id : std_logic_vector(7 downto 0);
-signal    write_strobe : std_logic;
-signal  k_write_strobe : std_logic;
-signal     read_strobe : std_logic;
-signal       interrupt : std_logic;
-signal   interrupt_ack : std_logic;
-signal    kcpsm6_sleep : std_logic;
-signal    kcpsm6_reset : std_logic;
+	signal         address : std_logic_vector(11 downto 0);
+	signal     instruction : std_logic_vector(17 downto 0);
+	signal     bram_enable : std_logic;
+	signal   kcpsm6_in_port : std_logic_vector(7 downto 0);
+	signal  kcpsm6_out_port : std_logic_vector(7 downto 0);
+	signal         port_id : std_logic_vector(7 downto 0);
+	signal    write_strobe : std_logic;
+	signal  k_write_strobe : std_logic;
+	signal     read_strobe : std_logic;
+	signal       interrupt : std_logic;
+	signal   interrupt_ack : std_logic;
+	signal    kcpsm6_sleep : std_logic;
+	signal    kcpsm6_reset : std_logic;
 
---
--- Some additional signals are required if your system also needs to reset KCPSM6. 
---
+	--
+	-- Some additional signals are required if your system also needs to reset KCPSM6. 
+	--
 
-signal       cpu_reset : std_logic;
-signal             rdl : std_logic;
+	signal       cpu_reset : std_logic;
+	signal             rdl : std_logic;
 
-signal		 data_route : std_logic_vector(7 downto 0);
-signal		 read_data_present : std_logic;
-signal		 write_data_present : std_logic;
-signal		 buffer_read_sig	: std_logic;
-signal		 buffer_write_sig : std_logic;
+	signal		 data_route : std_logic_vector(7 downto 0);
+	signal		 read_data_present : std_logic;
+	signal		 write_data_present : std_logic;
+	signal		 buffer_read_sig	: std_logic;
+	signal		 buffer_write_sig : std_logic;
 
--- uart signals
+	-- uart signals
 	signal data_in_sig, data_out_sig : std_logic_vector (7 downto 0);
 
 begin
@@ -172,7 +172,9 @@ processor: kcpsm6
                      reset => kcpsm6_reset,
                        clk => clk);
 							  
-							  
+  kcpsm6_sleep <= '0';
+  interrupt <= interrupt_ack;
+					  
   program_rom: terrible
     generic map(             C_FAMILY => "S6",   --Family 'S6', 'V6' or '7S'
                     C_RAM_SIZE_KWORDS => 1,      --Program size '1', '2' or '4'
@@ -191,7 +193,7 @@ rx: uart_rx6
               buffer_data_present => read_data_present,
                  buffer_half_full => open,
                       buffer_full => open,
-                     buffer_reset => '0',              
+                     buffer_reset => reset,              
                               clk => clk
 );
 
@@ -203,15 +205,15 @@ rx: uart_rx6
               buffer_data_present => open,
                  buffer_half_full => open,
                       buffer_full => open,
-                     buffer_reset => '0',              
+                     buffer_reset => reset,              
                               clk => clk
 );
 
 --enable read/write
-buffer_read_sig <= '1' when port_id = X"01" and read_strobe = '1'
+buffer_read_sig <= '1' when port_id = X"02" and read_strobe = '1'
 						 else '0';
 
-buffer_write_sig <= '1' when port_id = X"02" and write_strobe = '1'
+buffer_write_sig <= '1' when port_id = X"03" and write_strobe = '1'
 						 else '0';
 
 --input to kcpsm6
