@@ -100,6 +100,17 @@ component kcpsm6
                                  clk : in std_logic);
 end component;
 
+component terrible                           
+    generic(             C_FAMILY : string := "S6"; 
+                C_RAM_SIZE_KWORDS : integer := 1;
+             C_JTAG_LOADER_ENABLE : integer := 0);
+    Port (      address : in std_logic_vector(11 downto 0);
+            instruction : out std_logic_vector(17 downto 0);
+                 enable : in std_logic;
+                    rdl : out std_logic;                    
+                    clk : in std_logic);
+  end component;
+
 signal         address : std_logic_vector(11 downto 0);
 signal     instruction : std_logic_vector(17 downto 0);
 signal     bram_enable : std_logic;
@@ -124,6 +135,11 @@ signal             rdl : std_logic;
 signal		 data_route : std_logic_vector(7 downto 0);
 signal		 read_data_present : std_logic;
 signal		 write_data_present : std_logic;
+signal		 buffer_read_sig	: std_logic;
+signal		 buffer_write_sig : std_logic;
+
+-- uart signals
+	signal data_in_sig, data_out_sig : std_logic_vector (7 downto 0);
 
 begin
 
@@ -155,24 +171,23 @@ processor: kcpsm6
                      sleep => kcpsm6_sleep,
                      reset => kcpsm6_reset,
                        clk => clk);
+							  
+							  
+  program_rom: terrible
+    generic map(             C_FAMILY => "S6",   --Family 'S6', 'V6' or '7S'
+                    C_RAM_SIZE_KWORDS => 1,      --Program size '1', '2' or '4'
+                 C_JTAG_LOADER_ENABLE => 1)      --Include JTAG Loader when set to '1' 
+    port map(      address => address,      
+               instruction => instruction,
+                    enable => bram_enable,
+                       rdl => kcpsm6_reset,
+                       clk => clk);
 	
 rx: uart_rx6 
   port map (            serial_in => serial_in,
                      en_16_x_baud => baud_16x_en_sig,
-                         data_out => data_route,
-                      buffer_read => read_data_present,
-              buffer_data_present => write_data_present,
-                 buffer_half_full => open,
-                      buffer_full => open,
-                     buffer_reset => '0',              
-                              clk => clk
-);
-
-  tx: uart_tx6 
-  port map (              data_in => data_route,
-                     en_16_x_baud => baud_16x_en_sig,
-                       serial_out => serial_out,
-                     buffer_write => write_data_present,
+                         data_out => data_out_sig,
+                      buffer_read => buffer_read_sig,
               buffer_data_present => read_data_present,
                  buffer_half_full => open,
                       buffer_full => open,
@@ -180,7 +195,34 @@ rx: uart_rx6
                               clk => clk
 );
 
-	
+  tx: uart_tx6 
+  port map (              data_in => data_in_sig,
+                     en_16_x_baud => baud_16x_en_sig,
+                       serial_out => serial_out,
+                     buffer_write => buffer_write_sig,
+              buffer_data_present => open,
+                 buffer_half_full => open,
+                      buffer_full => open,
+                     buffer_reset => '0',              
+                              clk => clk
+);
+
+--enable read/write
+buffer_read_sig <= '1' when port_id = X"01" and read_strobe = '1'
+						 else '0';
+
+buffer_write_sig <= '1' when port_id = X"02" and write_strobe = '1'
+						 else '0';
+
+--input to kcpsm6
+kcpsm6_in_port <= data_out_sig when port_id = x"02" else
+						"0000000" & read_data_present when port_id =x"01" else
+						(others => '0');
+
+--input to uart_tx6	
+data_in_sig <= kcpsm6_out_port when port_id = x"03" else
+					(others => '0');
+
 
 
 end remote_arch;
