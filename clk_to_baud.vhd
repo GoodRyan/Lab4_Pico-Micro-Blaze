@@ -46,24 +46,22 @@ signal counter_reg, counter_next : unsigned(10 downto 0);
 begin
 
 --counter
-counter_next <= counter_reg + 1 when (counter_next <= BAUD_COUNT) else
+	counter_next <= counter_reg + 1 when (counter_reg < BAUD_COUNT) else
 					 (others => '0');
 
-process(clk, reset)
-begin
-if rising_edge(clk) then
+	baud_16x_en <= '1' when counter_reg = 0 else
+						'0';
 
-	if reset = '1' then
-		counter_reg <= (others => '0');
-		baud_16x_en <= '0';
-	elsif counter_reg = BAUD_COUNT then
-			baud_16x_en <= '1';
-	else  counter_reg <= counter_next;
-			baud_16x_en <= '0';
-	end if;
-	
-end if;
-end process;
+	process(clk, reset)
+	begin
+		if rising_edge(clk) then
+			if reset = '1' then
+				counter_reg <= (others => '0');
+			else
+				counter_reg <= counter_next;
+			end if;
+		end if;
+	end process;
 
 end baud_arch;
 
