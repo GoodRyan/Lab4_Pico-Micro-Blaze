@@ -22,7 +22,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 
 -- Uncomment the following library declaration if using
 -- arithmetic functions with Signed or Unsigned values
---use IEEE.NUMERIC_STD.ALL;
+use IEEE.NUMERIC_STD.ALL;
 
 -- Uncomment the following library declaration if instantiating
 -- any Xilinx primitives in this code.
@@ -110,6 +110,14 @@ architecture remote_arch of atlys_remote_terminal_pb is
 							  rdl : out std_logic;                    
 							  clk : in std_logic);
 	end component;
+	
+	component nibble_to_ascii
+	port(
+		clk			:  in std_logic;
+		nibble		:	in std_logic_vector(3 downto 0);
+		ascii			:  out std_logic_vector(7 downto 0)
+	);
+	end component;
 
 	signal         address : std_logic_vector(11 downto 0);
 	signal     instruction : std_logic_vector(17 downto 0);
@@ -137,6 +145,9 @@ architecture remote_arch of atlys_remote_terminal_pb is
 	signal		 write_data_present : std_logic;
 	signal		 buffer_read_sig	: std_logic;
 	signal		 buffer_write_sig : std_logic;
+	
+	signal		 nibble_sig	: std_logic_vector(3 downto 0);
+	signal		 upper_switch, lower_switch : std_logic_vector(7 downto 0);
 
 	-- uart signals
 	signal data_in_sig, data_out_sig : std_logic_vector (7 downto 0);
@@ -149,9 +160,22 @@ clk_to_baud_init: clk_to_baud
 		reset => reset,
 		baud_16x_en => baud_16x_en_sig
 	);
+	
+nibble_to_ascii_init_one: nibble_to_ascii
+	port map(
+		clk => clk,
+		nibble => switch(7 downto 4),
+		ascii => upper_switch
+	);
+	
+nibble_to_ascii_init_two: nibble_to_ascii
+	port map(
+		clk => clk,
+		nibble => switch(3 downto 0),
+		ascii => lower_switch
+	);
 
 --LED output
-LED <= kcpsm6_out_port;
 
 processor: kcpsm6
     generic map (                 hwbuild => X"00", 
@@ -214,16 +238,18 @@ buffer_read_sig <= '1' when port_id = X"02" and read_strobe = '1'
 						 else '0';
 
 buffer_write_sig <= '1' when port_id = X"03" and write_strobe = '1'
-						 else '0';
-
---input to kcpsm6
+						 else '0';--input to kcpsm6
 kcpsm6_in_port <= data_out_sig when port_id = x"02" else
 						"0000000" & read_data_present when port_id =x"01" else
+						upper_switch when port_id = x"04" else
+						lower_switch when port_id = x"05" else
 						(others => '0');
 
 --input to uart_tx6	
 data_in_sig <= kcpsm6_out_port when port_id = x"03" else
 					(others => '0');
+					
+led <= kcpsm6_out_port when port_id = x"06";
 
 
 
