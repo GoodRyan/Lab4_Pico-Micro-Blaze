@@ -118,6 +118,14 @@ architecture remote_arch of atlys_remote_terminal_pb is
 		ascii			:  out std_logic_vector(7 downto 0)
 	);
 	end component;
+	
+	component vector_to_ascii
+	port(
+		clk			:  in std_logic;
+		vector		:	in std_logic_vector(7 downto 0);
+		ascii			:  out std_logic_vector(3 downto 0)
+	);
+	end component;
 
 	signal         address : std_logic_vector(11 downto 0);
 	signal     instruction : std_logic_vector(17 downto 0);
@@ -150,7 +158,9 @@ architecture remote_arch of atlys_remote_terminal_pb is
 	signal		 upper_switch, lower_switch : std_logic_vector(7 downto 0);
 
 	-- uart signals
-	signal data_in_sig, data_out_sig : std_logic_vector (7 downto 0);
+	signal data_in_sig, data_out_sig, vector_sig_one, vector_sig_two : std_logic_vector (7 downto 0);
+	signal ascii_sig_one, ascii_sig_two : std_logic_vector (3 downto 0);
+	signal vector_sig_one_next, vector_sig_two_next : std_logic_vector(7 downto 0);
 
 begin
 
@@ -174,6 +184,7 @@ nibble_to_ascii_init_two: nibble_to_ascii
 		nibble => switch(3 downto 0),
 		ascii => lower_switch
 	);
+
 
 --LED output
 
@@ -244,13 +255,45 @@ kcpsm6_in_port <= data_out_sig when port_id = x"02" else
 						upper_switch when port_id = x"04" else
 						lower_switch when port_id = x"05" else
 						(others => '0');
+						
+------------------------LED--------------------------------
+						
+
+vector_to_ascii_init_one: vector_to_ascii
+	port map(
+		clk => clk,
+		vector => vector_sig_one,
+		ascii => ascii_sig_one
+	);
+	
+vector_to_ascii_init_two: vector_to_ascii
+	port map(
+		clk => clk,
+		vector => vector_sig_two,
+		ascii => ascii_sig_two
+	);
 
 --input to uart_tx6	
 data_in_sig <= kcpsm6_out_port when port_id = x"03" else
 					(others => '0');
 					
-led <= kcpsm6_out_port when port_id = x"06";
+	vector_sig_one_next <= kcpsm6_out_port when port_id = x"06" else
+									vector_sig_one;
+									
+	vector_sig_two_next <= kcpsm6_out_port when port_id = x"07" else
+									vector_sig_two;
+	
+process(clk, port_id)
+begin
+	if rising_edge(clk) then
+		vector_sig_one <= vector_sig_one_next;
+		vector_sig_two <=	vector_sig_two_next;
+	end if;
+end process;
+	
 
+led(7 downto 4)<= ascii_sig_one;
+led(3 downto 0) <= ascii_sig_two;
 
 
 end remote_arch;
