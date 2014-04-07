@@ -1,0 +1,10 @@
+##############################################################################
+## Filename:          C:/Users/C15Ryan.Good/Documents/classes/ECE/EDK_USER_REPO/MyProcessorIPLib/pcores/micro_blaze_led_v1_00_a/data/micro_blaze_led_v2_1_0.pao
+## Description:       Peripheral Analysis Order
+## Date:              Thu Apr 03 19:51:04 2014 (by Create and Import Peripheral Wizard)
+##############################################################################
+
+lib proc_common_v3_00_a  all 
+lib axi_lite_ipif_v1_01_a  all 
+lib micro_blaze_led_v1_00_a user_logic vhdl
+lib micro_blaze_led_v1_00_a micro_blaze_led vhdl
